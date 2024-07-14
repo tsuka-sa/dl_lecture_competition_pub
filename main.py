@@ -366,7 +366,13 @@ def main():
     # dataloader / model
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
-        transforms.ToTensor()
+        transforms.RandomHorizontalFlip(p=1.0),
+        transforms.RandomRotation(degrees=(-180, 180)),
+        transforms.RandomCrop(32, padding=(4, 4, 4, 4), padding_mode='constant'),
+        transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
+        transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),
+        transforms.ToTensor(),
+        transforms.RandomErasing(p=0.8, scale=(0.02, 0.33), ratio=(0.3, 3.3)),
     ])
     train_dataset = VQADataset(df_path="./data/train.json", image_dir="./data/train", transform=transform)
     test_dataset = VQADataset(df_path="./data/valid.json", image_dir="./data/valid", transform=transform, answer=False)
@@ -378,7 +384,7 @@ def main():
     model = VQAModel(vocab_size=len(train_dataset.question2idx)+1, n_answer=len(train_dataset.answer2idx)).to(device)
 
     # optimizer / criterion
-    num_epoch = 20
+    num_epoch = 2
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
 
